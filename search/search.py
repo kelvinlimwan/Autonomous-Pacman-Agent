@@ -19,6 +19,8 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+INFINITY = float("inf")
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -120,13 +122,13 @@ def depthFirstSearch(problem):
     while mystack :
         node = mystack.pop()
         state, action, cost, path = node
-        if state not in visited :
+        if state not in visited:
             visited.add(state)
-            if problem.isGoalState(state) :
+            if problem.isGoalState(state):
                 path = path + [(state, action)]
-                break;
+                break
             succNodes = problem.expand(state)
-            for succNode in succNodes :
+            for succNode in succNodes:
                 succState, succAction, succCost = succNode
                 newNode = (succState, succAction, cost + succCost, path + [(state, action)])
                 mystack.push(newNode)
@@ -137,7 +139,26 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    myqueue = util.Queue()
+    startNode = (problem.getStartState(), '', 0, [])
+    myqueue.push(startNode)
+    visited = set()
+    while myqueue:
+        node = myqueue.pop()
+        state, action, cost, path = node
+        if state not in visited:
+            visited.add(state)
+            if problem.isGoalState(state):
+                path = path + [(state, action)]
+                break
+            succNodes = problem.expand(state)
+            for succNode in succNodes:
+                succState, succAction, succCost = succNode
+                newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+                myqueue.push(newNode)
+    actions = [action[1] for action in path]
+    del actions[0]
+    return actions
 
 def nullHeuristic(state, problem=None):
     """
@@ -150,14 +171,75 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     #COMP90054 Task 1, Implement your A Star search algorithm here
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    openList = util.PriorityQueue()
+    initialNode = (problem.getStartState(), "", 0, [])
+    openList.push(initialNode, initialNode[2] + heuristic(problem.getStartState(), problem))
+    closedList = set()
+    bestG = dict()
+    while openList:
+        node = openList.pop()
+        state, action, cost, path = node
+        if state not in bestG:
+            bestG[state] = INFINITY
+        if state not in closedList or cost < bestG[state]:
+            closedList.add(state)
+            bestG[state] = cost
+            if problem.isGoalState(state):
+                path = path + [(state, action)]
+                break
+            succNodes = problem.expand(state)
+            for succNode in succNodes:
+                succState, succAction, succCost = succNode
+                if heuristic(succState, problem) < INFINITY:
+                    newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+                    openList.push(newNode, newNode[2] + heuristic(succState, problem))
+    actions = [action[1] for action in path]
+    del actions[0]
+    return actions
 
-        
+
 def recursivebfs(problem, heuristic=nullHeuristic) :
     #COMP90054 Task 2, Implement your Recursive Best First Search algorithm here
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    
+    initialState = problem.getStartState()
+    initialNode = [initialState, "", 0, [], heuristic(initialState, problem)]  #state, action, g, path, f
+    path = rbfsExplore(problem, initialNode, INFINITY, heuristic)[0]
+    actions = [action[1] for action in path]
+    del actions[0]
+    return actions
+
+def rbfsExplore(problem, node, limit, heuristic):
+    state = node[0]
+    action = node[1]
+    cost = node[2]
+    path = node[3]
+    fValue = node[4]
+    if problem.isGoalState(state):
+        return path + [(state, action)], None
+
+    succNodes = problem.expand(state)
+    if len(succNodes) == 0: #not empty
+        return [], INFINITY
+
+    nodeList = []
+    for succNode in succNodes:
+        succState, succAction, succCost = succNode
+        succFValue = cost + succCost + heuristic(succState, problem)
+        newNode = [succState, succAction, cost + succCost, path + [(state, action)], succFValue]
+        nodeList.append(newNode)
+
+    while True:
+        nodeList.sort(key=lambda x: x[4])
+        bestNode = nodeList[0]
+        if bestNode[4] > limit:
+            return [], bestNode[4]
+        secondBestF = nodeList[1][4]
+        result = rbfsExplore(problem, bestNode, min(limit, secondBestF), heuristic)
+        bestNode[4] = result[1]
+        if len(result[0]) != 0:  # not empty list
+            return result
+
+
 
     
 # Abbreviations
