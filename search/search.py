@@ -233,7 +233,9 @@ def rbfsExplore(problem, node, limit, heuristic):
         bestNode = nodeList[0]
         if bestNode[4] > limit:
             return [], bestNode[4]
-        secondBestF = nodeList[1][4]
+        secondBestF = INFINITY
+        if len(nodeList) > 1:
+            secondBestF = nodeList[1][4]
         result = rbfsExplore(problem, bestNode, min(limit, secondBestF), heuristic)
         bestNode[4] = result[1]
         if len(result[0]) != 0:  # not empty list
