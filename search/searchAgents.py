@@ -41,6 +41,8 @@ import util
 import time
 import search
 
+INFINITY = float("inf")
+
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
 
@@ -539,6 +541,7 @@ def get_min(queue) :
 	del queue[cheapest]
 	return cheapestItem
 
+'''
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -563,8 +566,148 @@ def foodHeuristic(state, problem):
     position, foodGrid, capsules = state
     #COMP90054 Task 3, Implement your code here
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-   
+
+    # goal aware
+    if problem.isGoalState(state):
+        return 0
+
+    foodList = foodGrid.asList()    # [(x1,y1), (x2,y2), ...] coordinates of food
+    wallList = problem.walls.asList()   # [(x1,y1), (x2,y2), ...] coordinates of walls
+
+    total = 0
+    newList = [position] + list(capsules)
+    for i in range(len(newList)-1):
+        total += get_distance(newList[i], newList[i+1]) - 1
+        
+
+    # get two foods that are furthest and the distance
+    food1 = position    #(x1, y1)
+    food2 = position    #(x2, y2)
+    furthestDistance = 0
+    for i1 in range(len(foodList)-1):
+        point1 = foodList[i1]
+        for i2 in range(i1+1, len(foodList)):
+            point2 = foodList[i2]
+            # game state might not update ?????
+            distance = get_distance(point1, point2)
+            if distance > furthestDistance:
+                furthestDistance = distance
+                food1 = point1
+                food2 = point2
+
+    # find closest fruit and distance between current position and closest fruit
+    distance1 = get_distance(position, food1)
+    distance2 = get_distance(position, food2)
+
+    # when one food left
+    if len(foodList) == 1:
+        return mazeDistanceFood(position, foodList[0], problem.startingGameState, capsules)
+    else:
+        return furthestDistance + min(distance1, distance2)
+'''
+
+def foodHeuristic(state, problem):
+    """
+    Your heuristic for the FoodSearchProblem goes here.
+
+    This heuristic must be admissible to ensure correctness.
+
+    The state is a tuple ( pacmanPosition, foodGrid, capsules) where foodGrid is a Grid
+    (see game.py) of either True or False. You can call foodGrid.asList() to get
+    a list of food coordinates instead.  capsules contains a tuple of capsule locations.
+
+    If you want access to info like walls, etc., you can query the
+    problem.  For example, problem.walls gives you a Grid of where the walls
+    are.
+
+    If you want to *store* information to be reused in other calls to the
+    heuristic, there is a dictionary called problem.heuristicInfo that you can
+    use. For example, if you only want to count the walls once and store that
+    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
+    Subsequent calls to this heuristic can access
+    problem.heuristicInfo['wallCount']
+    """
+    position, foodGrid, capsules = state
+    #COMP90054 Task 3, Implement your code here
+    "*** YOUR CODE HERE ***"
+
+    if problem.isGoalState(state):
+        return 0
+
+    foodList = foodGrid.asList()    # [(x1,y1), (x2,y2), ...] coordinates of food
+
+    # get two foods that are furthest and the distance
+    food1 = position
+    food2 = position
+    furthestDistance = 0
+    for i1 in range(len(foodList)-1):
+        point1 = foodList[i1]
+        for i2 in range(i1+1, len(foodList)):
+            point2 = foodList[i2]
+            # game state might not update ?????
+            distance = mazeDistance(point1, point2, problem.startingGameState)
+            if distance > furthestDistance:
+                furthestDistance = distance
+                food1 = point1
+                food2 = point2
+
+    # find closest fruit and distance between current position and closest fruit
+    distance1 = mazeDistance(position, food1, problem.startingGameState)
+    distance2 = mazeDistance(position, food2, problem.startingGameState)
+
+    # when one food left
+    if len(foodList) == 1:
+        #print(mazeDistanceFood(position, foodList[0], problem.startingGameState, capsules))
+        return max(1, mazeDistanceFood(position, foodList[0], problem.startingGameState) - len(capsules))
+    else:
+        #print(furthestDistance + min(distance1, distance2))
+        return max(1, furthestDistance + min(distance1, distance2) - len(capsules))
+
+
+def mazeDistanceFood(point1, point2, gameState, capsules):
+    """
+    Returns the maze distance between any two points, using the search functions
+    you have already built. The gameState can be any game state -- Pacman's
+    position in that state is ignored.
+
+    Example usage: mazeDistance( (2,4), (5,6), gameState)
+
+    This might be a useful helper function for your ApproximateSearchAgent.
+    """
+    prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
+    return len(breadthFirstSearchFood(prob, capsules))
+
+def breadthFirstSearchFood(problem, capsules):
+    """Search the shallowest nodes in the search tree first."""
+    "*** YOUR CODE HERE ***"
+    myqueue = util.Queue()
+    startNode = (problem.getStartState(), '', 0, [])
+    myqueue.push(startNode)
+    visited = set()
+    #shortestPath = INFINITY
+    while not myqueue.isEmpty():
+        node = myqueue.pop()
+        state, action, cost, path = node
+        if state not in visited:
+            visited.add(state)
+            if problem.isGoalState(state):
+                path = path + [(state, action)]
+                #if len(path) < shortestPath:
+                #    shortestPath = len(path)
+                break
+            succNodes = problem.expand(state)
+            for succNode in succNodes:
+                succState, succAction, succCost = succNode
+                #if succState in capsules:
+                #    newNode = (succState, succAction, cost, path + [(state, action)])
+                #else:
+                #    newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+                newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+                myqueue.push(newNode)
+    actions = [action[1] for action in path]
+    del actions[0]
+    return actions
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"

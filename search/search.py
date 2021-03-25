@@ -146,6 +146,7 @@ def breadthFirstSearch(problem):
     while myqueue:
         node = myqueue.pop()
         state, action, cost, path = node
+        print(state)
         if state not in visited:
             visited.add(state)
             if problem.isGoalState(state):
@@ -233,6 +234,7 @@ def rbfsExplore(problem, node, limit, heuristic):
         bestNode = nodeList[0]
         if bestNode[4] > limit:
             return [], bestNode[4]
+        # TRY CATCH ?
         secondBestF = INFINITY
         if len(nodeList) > 1:
             secondBestF = nodeList[1][4]
