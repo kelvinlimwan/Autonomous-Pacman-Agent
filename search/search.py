@@ -146,7 +146,6 @@ def breadthFirstSearch(problem):
     while myqueue:
         node = myqueue.pop()
         state, action, cost, path = node
-        print(state)
         if state not in visited:
             visited.add(state)
             if problem.isGoalState(state):

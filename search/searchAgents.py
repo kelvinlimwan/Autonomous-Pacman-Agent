@@ -655,10 +655,11 @@ def foodHeuristic(state, problem):
     distance1 = mazeDistance(position, food1, problem.startingGameState)
     distance2 = mazeDistance(position, food2, problem.startingGameState)
 
+    # RELAZ FOR CAPSULES AND TEST WITH TASK3SEARCH
     # when one food left
     if len(foodList) == 1:
         #print(mazeDistanceFood(position, foodList[0], problem.startingGameState, capsules))
-        return max(1, mazeDistanceFood(position, foodList[0], problem.startingGameState) - len(capsules))
+        return max(1, mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules))
     else:
         #print(furthestDistance + min(distance1, distance2))
         return max(1, furthestDistance + min(distance1, distance2) - len(capsules))
@@ -675,7 +676,7 @@ def mazeDistanceFood(point1, point2, gameState, capsules):
     This might be a useful helper function for your ApproximateSearchAgent.
     """
     prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
-    return len(breadthFirstSearchFood(prob, capsules))
+    return breadthFirstSearchFood(prob, capsules)
 
 def breadthFirstSearchFood(problem, capsules):
     """Search the shallowest nodes in the search tree first."""
@@ -684,7 +685,7 @@ def breadthFirstSearchFood(problem, capsules):
     startNode = (problem.getStartState(), '', 0, [])
     myqueue.push(startNode)
     visited = set()
-    #shortestPath = INFINITY
+    shortestPath = INFINITY
     while not myqueue.isEmpty():
         node = myqueue.pop()
         state, action, cost, path = node
@@ -692,21 +693,17 @@ def breadthFirstSearchFood(problem, capsules):
             visited.add(state)
             if problem.isGoalState(state):
                 path = path + [(state, action)]
-                #if len(path) < shortestPath:
-                #    shortestPath = len(path)
-                break
+                if len(path) < shortestPath:
+                    shortestPath = len(path)
             succNodes = problem.expand(state)
             for succNode in succNodes:
                 succState, succAction, succCost = succNode
-                #if succState in capsules:
-                #    newNode = (succState, succAction, cost, path + [(state, action)])
-                #else:
-                #    newNode = (succState, succAction, cost + succCost, path + [(state, action)])
-                newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+                if succState in capsules:
+                    newNode = (succState, succAction, cost, path + [(state, action)])
+                else:
+                    newNode = (succState, succAction, cost + succCost, path + [(state, action)])
                 myqueue.push(newNode)
-    actions = [action[1] for action in path]
-    del actions[0]
-    return actions
+    return shortesPath - 1
 
 
 class ClosestDotSearchAgent(SearchAgent):
