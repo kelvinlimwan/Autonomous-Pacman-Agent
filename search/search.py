@@ -171,30 +171,43 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     #COMP90054 Task 1, Implement your A Star search algorithm here
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    openList = util.PriorityQueue()
+    openList = util.PriorityQueue() # priority is f = g + h
     initialNode = (problem.getStartState(), "", 0, [])
     openList.push(initialNode, initialNode[2] + heuristic(problem.getStartState(), problem))
     closedList = set()
-    bestG = dict()
+    bestG = dict()  # maps each state to their corresponding best g
+
     while openList:
         node = openList.pop()
         state, action, cost, path = node
+
+        # initiate an infinite g for unvisited states
         if state not in bestG:
             bestG[state] = INFINITY
+
+        # for unvisited state or re-open if there is a better g for state
         if state not in closedList or cost < bestG[state]:
             closedList.add(state)
-            bestG[state] = cost
+            bestG[state] = cost # update state's best G
+
+            # when goal is reached, break loop to return path
             if problem.isGoalState(state):
                 path = path + [(state, action)]
                 break
+
+            # explore state's children
             succNodes = problem.expand(state)
             for succNode in succNodes:
                 succState, succAction, succCost = succNode
+
+                # if goal is reachable from succState, push to priority queue
                 if heuristic(succState, problem) < INFINITY:
                     newNode = (succState, succAction, cost + succCost, path + [(state, action)])
                     openList.push(newNode, newNode[2] + heuristic(succState, problem))
+
     actions = [action[1] for action in path]
     del actions[0]
+
     return actions
 
 
@@ -202,10 +215,12 @@ def recursivebfs(problem, heuristic=nullHeuristic) :
     #COMP90054 Task 2, Implement your Recursive Best First Search algorithm here
     "*** YOUR CODE HERE ***"
     initialState = problem.getStartState()
-    initialNode = [initialState, "", 0, [], heuristic(initialState, problem)]  #state, action, g, path, f
+    initialNode = [initialState, "", 0, [], heuristic(initialState, problem)]  # [state, action, g, path, f]
+
     path = rbfsExplore(problem, initialNode, INFINITY, heuristic)[0]
     actions = [action[1] for action in path]
     del actions[0]
+
     return actions
 
 def rbfsExplore(problem, node, limit, heuristic):
@@ -214,13 +229,18 @@ def rbfsExplore(problem, node, limit, heuristic):
     cost = node[2]
     path = node[3]
     fValue = node[4]
+
+    # when goal state is reached, return path
     if problem.isGoalState(state):
         return path + [(state, action)], None
 
     succNodes = problem.expand(state)
-    if len(succNodes) == 0: #not empty
+
+    # when state has no children, return an empty list as signal for failure
+    if not succNodes:
         return [], INFINITY
 
+    # create list corresponding nodes for state's children
     nodeList = []
     for succNode in succNodes:
         succState, succAction, succCost = succNode
@@ -229,20 +249,25 @@ def rbfsExplore(problem, node, limit, heuristic):
         nodeList.append(newNode)
 
     while True:
-        nodeList.sort(key=lambda x: x[4])
-        bestNode = nodeList[0]
+        nodeList.sort(key=lambda x: x[4])   # sort in ascending order of f
+        bestNode = nodeList[0]  # node with lowest f
+
+        # when lowest f is  greater than the f limit, return an empty list as signal for failure
         if bestNode[4] > limit:
             return [], bestNode[4]
-        # TRY CATCH ?
-        secondBestF = INFINITY
-        if len(nodeList) > 1:
+
+        # second lowest f
+        try:
             secondBestF = nodeList[1][4]
+        except:
+            secondBestF = INFINITY
+
         result = rbfsExplore(problem, bestNode, min(limit, secondBestF), heuristic)
         bestNode[4] = result[1]
-        if len(result[0]) != 0:  # not empty list
+
+        # if result is not an empty list (not a failure) return the path
+        if result[0]:
             return result
-
-
 
     
 # Abbreviations
