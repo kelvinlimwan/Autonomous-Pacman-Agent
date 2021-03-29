@@ -43,6 +43,8 @@ import search
 
 INFINITY = float("inf")
 CAPSULE_FACTOR = 2
+ALPHA = 2
+
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -141,14 +143,174 @@ class DeceptiveSearchAgentpi2(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
         #COMP90054 Task 4 - Implement your deceptive search algorithm here
-        util.raiseNotDefined()
-        
+        initialPosition = state.getPacmanPosition() # (x,y)
+        realGoal = state.getFood().asList()[0]  # [(x,y)]
+        bogusGoals = state.getCapsules()  # [(x1,y1), (x2,y2),...]
+
+        self.actions = []
+
+        # get beta minimum
+        betaMin = INFINITY
+        for bogusGoal in bogusGoals:
+            a = mazeDistance(initialPosition, realGoal, state)
+            b = mazeDistance(initialPosition, bogusGoal, state)
+            c = mazeDistance(realGoal, bogusGoal, state)
+            beta = (c + a - b) / 2
+            betaMin = min(betaMin, beta)
+
+        # get all possible nodes (for t)
+        allPositions = self.getAllPositions(state)
+
+        possibleTargets = []
+        diffMin = INFINITY
+        for position in allPositions:
+            optc = mazeDistance(realGoal, position, state)
+            diff = optc - betaMin
+            if 0 <= diff <= diffMin:
+                if diff < diffMin:
+                    possibleTargets = [position]
+                else:
+                    possibleTargets.append(position)
+                diffMin = diff
+
+        # choose target closes to a bogus goal (most deceptive)
+        target = initialPosition
+        distanceMin = INFINITY
+        for possibleTarget in possibleTargets:
+            minDistanceToBogusGoals = INFINITY
+            for bogusGoal in bogusGoals:
+                distance = mazeDistance(possibleTarget, bogusGoal, state)
+                minDistanceToBogusGoals = min(minDistanceToBogusGoals, distance)
+            if minDistanceToBogusGoals < distanceMin:
+                distanceMin = minDistanceToBogusGoals
+                target = possibleTarget
+            #print(minDistanceToBogusGoals)
+
+        problem1 = PositionSearchProblem(state, start=initialPosition, goal=target, warn=False, visualize=False)
+        self.actions += search.bfs(problem1)
+
+        problem2 = PositionSearchProblem(state, start=target, goal=realGoal, warn=False, visualize=False)
+        self.actions += search.bfs(problem2)
+
+        #print(self.actions)
+        return self.actions
+
+    def getAllPositions(self, state):
+        walls = state.getWalls().asList()    # [(x1,y1), (x2,y2),...]
+        bottomLeft = walls[0]
+        topRight = walls[-1]
+        positions = []
+        for i in range(bottomLeft[0] + 1, topRight[0]):
+            for j in range(bottomLeft[1] + 1, topRight[1]):
+                pos = (i, j)
+                if pos not in walls:
+                    positions.append(pos)
+        return positions
+
 class DeceptiveSearchAgentpi3(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
         #COMP90054 Task 4 - Implement your deceptive search algorithm here
-        util.raiseNotDefined()
- 
+        initialPosition = state.getPacmanPosition()  # (x,y)
+        realGoal = state.getFood().asList()[0]  # [(x,y)]
+        bogusGoals = state.getCapsules()  # [(x1,y1), (x2,y2),...]
+
+        self.actions = []
+
+        # get beta minimum
+        betaMin = INFINITY
+        gMin = bogusGoals[0]
+        for bogusGoal in bogusGoals:
+            a = mazeDistance(initialPosition, realGoal, state)
+            b = mazeDistance(initialPosition, bogusGoal, state)
+            c = mazeDistance(realGoal, bogusGoal, state)
+            beta = (c + a - b) / 2
+            if beta < betaMin:
+                betaMin = beta
+                gMin = bogusGoal
+
+        # get all possible nodes (for t)
+        allPositions = self.getAllPositions(state)
+
+        possibleTargets = []
+        diffMin = INFINITY
+        for position in allPositions:
+            optc = mazeDistance(realGoal, position, state)
+            diff = optc - betaMin
+            if 0 <= diff <= diffMin:
+                if diff < diffMin:
+                    possibleTargets = [position]
+                else:
+                    possibleTargets.append(position)
+                diffMin = diff
+
+        # choose target closes to a bogus goal (most deceptive)
+        target = initialPosition
+        distanceMin = INFINITY
+        for possibleTarget in possibleTargets:
+            minDistanceToBogusGoals = INFINITY
+            for bogusGoal in bogusGoals:
+                distance = mazeDistance(possibleTarget, bogusGoal, state)
+                minDistanceToBogusGoals = min(minDistanceToBogusGoals, distance)
+            if minDistanceToBogusGoals < distanceMin:
+                distanceMin = minDistanceToBogusGoals
+                target = possibleTarget
+
+        # path to target but priority to bogus Goal
+        problem1 = PositionSearchProblem(state, start=initialPosition, goal=target, warn=False, visualize=False)
+        self.actions += self.aStarD3(state, problem1, realGoal, gMin, manhattanHeuristic)
+
+        problem2 = PositionSearchProblem(state, start=target, goal=realGoal, warn=False, visualize=False)
+        self.actions += search.bfs(problem2)
+
+        #print(self.actions)
+        return self.actions
+
+    def getAllPositions(self, state):
+        walls = state.getWalls().asList()    # [(x1,y1), (x2,y2),...]
+        bottomLeft = walls[0]
+        topRight = walls[-1]
+        positions = []
+        for i in range(bottomLeft[0] + 1, topRight[0]):
+            for j in range(bottomLeft[1] + 1, topRight[1]):
+                pos = (i, j)
+                if pos not in walls:
+                    positions.append(pos)
+        return positions
+
+    def aStarD3(self, gameState, problem, realG, gMin, heuristic=search.nullHeuristic):
+        openList = util.PriorityQueue()
+        initialNode = (problem.getStartState(), "", 0, [])
+        openList.push(initialNode, initialNode[2] + heuristic(problem.getStartState(), problem))
+        closedList = set()
+        bestG = dict()
+        while openList:
+            node = openList.pop()
+            state, action, cost, path = node
+            if state not in bestG:
+                bestG[state] = INFINITY
+            if state not in closedList or cost < bestG[state]:
+                closedList.add(state)
+                bestG[state] = cost
+                if problem.isGoalState(state):
+                    path = path + [(state, action)]
+                    break
+                succNodes = problem.expand(state)
+                for succNode in succNodes:
+                    succState, succAction, succCost = succNode
+                    if heuristic(succState, problem) < INFINITY:
+                        newNode = (succState, succAction, cost + succCost, path + [(state, action)])
+
+                        problemRealG = PositionSearchProblem(gameState, start=problem.getStartState(), goal=realG, warn=False, visualize=False)
+                        problemGMin = PositionSearchProblem(gameState, start=problem.getStartState(), goal=gMin, warn=False, visualize=False)
+                        if heuristic(succState, problemRealG) < heuristic(succState, problemGMin):
+                            openList.push(newNode, newNode[2] + ALPHA * heuristic(succState, problem))
+                        else:
+                            openList.push(newNode, newNode[2] + heuristic(succState, problem))
+        actions = [action[1] for action in path]
+        del actions[0]
+        return actions
+
 
 class PositionSearchProblem(search.SearchProblem):
     """
@@ -598,47 +760,6 @@ def foodHeuristic(state, problem):
     else:
         #print(max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR))
         return max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR)
-
-
-def mazeDistanceFood(point1, point2, gameState, capsules):
-    """
-    Returns the maze distance between any two points, using the search functions
-    you have already built. The gameState can be any game state -- Pacman's
-    position in that state is ignored.
-
-    Example usage: mazeDistance( (2,4), (5,6), gameState)
-
-    This might be a useful helper function for your ApproximateSearchAgent.
-    """
-    prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
-    return breadthFirstSearchFood(prob, capsules)
-
-def breadthFirstSearchFood(problem, capsules):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    myqueue = util.Queue()
-    startNode = (problem.getStartState(), '', 0, [])
-    myqueue.push(startNode)
-    visited = set()
-    shortestPath = INFINITY
-    while not myqueue.isEmpty():
-        node = myqueue.pop()
-        state, action, cost, path = node
-        if state not in visited:
-            visited.add(state)
-            if problem.isGoalState(state):
-                path = path + [(state, action)]
-                if len(path) < shortestPath:
-                    shortestPath = len(path)
-            succNodes = problem.expand(state)
-            for succNode in succNodes:
-                succState, succAction, succCost = succNode
-                if succState in capsules:
-                    newNode = (succState, succAction, cost, path + [(state, action)])
-                else:
-                    newNode = (succState, succAction, cost + succCost, path + [(state, action)])
-                myqueue.push(newNode)
-    return shortesPath - 1
 
 
 class ClosestDotSearchAgent(SearchAgent):

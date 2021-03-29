@@ -2,6 +2,6 @@ solution: """
 North West North North North North North East West West
 """
 rev_solution: """
-North West North North North North North East West West
+North West North North North East North North West West
 """
 
