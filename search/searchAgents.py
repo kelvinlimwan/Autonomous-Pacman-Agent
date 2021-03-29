@@ -594,10 +594,10 @@ def foodHeuristic(state, problem):
     # when one food left
     if len(foodList) == 1:
         #print(max(1, mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules) // CAPSULE_FACTOR))
-        return mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules) // CAPSULE_FACTOR
+        return max(1, mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules) // CAPSULE_FACTOR)
     else:
         #print(max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR))
-        return furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR
+        return max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR)
 
 
 def mazeDistanceFood(point1, point2, gameState, capsules):
