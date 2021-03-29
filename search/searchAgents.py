@@ -581,20 +581,20 @@ def foodHeuristic(state, problem):
         for i2 in range(i1+1, len(foodList)):
             point2 = foodList[i2]
             # game state might not update ?????
-            distance = mazeDistance(point1, point2, problem.startingGameState)
+            distance = get_distance(point1, point2)
             if distance > furthestDistance:
                 furthestDistance = distance
                 food1 = point1
                 food2 = point2
 
     # find closest fruit and distance between current position and closest fruit
-    distance1 = mazeDistance(position, food1, problem.startingGameState)
-    distance2 = mazeDistance(position, food2, problem.startingGameState)
+    distance1 = get_distance(position, food1)
+    distance2 = get_distance(position, food2)
 
     # when one food left
     if len(foodList) == 1:
-        #print(max(1, mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules) // CAPSULE_FACTOR))
-        return max(1, mazeDistance(position, foodList[0], problem.startingGameState) - len(capsules) // CAPSULE_FACTOR)
+        #print(max(1, get_distance(position, foodList[0]) - len(capsules) // CAPSULE_FACTOR))
+        return max(1, get_distance(position, foodList[0]) - len(capsules) // CAPSULE_FACTOR)
     else:
         #print(max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR))
         return max(1, furthestDistance + min(distance1, distance2) - len(capsules) // CAPSULE_FACTOR)
