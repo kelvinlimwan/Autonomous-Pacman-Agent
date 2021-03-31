@@ -142,10 +142,11 @@ class DeceptiveSearchAgentpi2(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
         #COMP90054 Task 4 - Implement your deceptive search algorithm here
+
         self.actions = []
 
         initialPosition = state.getPacmanPosition()
-        realGoal = state.getFood().asList()[0]  # assuming there is only one real goal
+        realGoal = state.getFood().asList()[0]  # there is only one real goal
         fakeGoals = state.getCapsules()  # list of bogus goals
 
         # get the minimum beta
@@ -213,10 +214,11 @@ class DeceptiveSearchAgentpi3(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
         #COMP90054 Task 4 - Implement your deceptive search algorithm here
+
         self.actions = []
 
         initialPosition = state.getPacmanPosition()
-        realGoal = state.getFood().asList()[0]  # assuming there is only one real goal
+        realGoal = state.getFood().asList()[0]  # there is only one real goal
         fakeGoals = state.getCapsules()  # list of bogus goals
 
         # get the minimum beta
@@ -249,15 +251,12 @@ class DeceptiveSearchAgentpi3(SearchAgent):
         target = initialPosition
         distanceMin = INFINITY
         for possibleTarget in possibleTargets:
-            minDistanceToFakeGoals = INFINITY
-            for fakeGoal in fakeGoals:
-                distance = mazeDistance(possibleTarget, fakeGoal, state)
-                minDistanceToFakeGoals = min(minDistanceToFakeGoals, distance)
-            if minDistanceToFakeGoals < distanceMin:
-                distanceMin = minDistanceToFakeGoals
+            minDistanceToGMin = mazeDistance(possibleTarget, gMin, state)
+            if minDistanceToGMin < distanceMin:
+                distanceMin = minDistanceToGMin
                 target = possibleTarget
 
-        # get the path, favouring the fake goals, between the initial position and the target using a modified a*
+        # get the path, favouring the bogus goal, between the initial position and the target using a modified a*
         problem1 = PositionSearchProblem(state, start=initialPosition, goal=target, warn=False, visualize=False)
         self.actions += self.aStarD3(state, problem1, realGoal, gMin, manhattanHeuristic)
 
@@ -269,6 +268,7 @@ class DeceptiveSearchAgentpi3(SearchAgent):
 
 
     def getAllPositions(self, state):
+
         walls = state.getWalls().asList()
         bottomLeft = walls[0]
         topRight = walls[-1]
@@ -285,9 +285,11 @@ class DeceptiveSearchAgentpi3(SearchAgent):
 
 
     def aStarD3(self, gameState, problem, realG, gMin, heuristic=search.nullHeuristic):
+
         openList = util.PriorityQueue() # priority is f = g + h
-        initialNode = (problem.getStartState(), "", 0, [])
-        openList.push(initialNode, initialNode[2] + heuristic(problem.getStartState(), problem))
+        initialState = problem.getStartState()
+        initialNode = (initialState, "", 0, [])
+        openList.push(initialNode, initialNode[2] + heuristic(initialState, problem))
         closedList = set()
         bestG = dict()  # maps each state to their corresponding best g
 
@@ -319,10 +321,10 @@ class DeceptiveSearchAgentpi3(SearchAgent):
                         newNode = (succState, succAction, cost + succCost, path + [(state, action)])
 
                         # adding the modified heuristic to favour fake goals by a factor ALPHA
-                        problemRealG = PositionSearchProblem(gameState, start=problem.getStartState(), goal=realG,
-                                                             warn=False, visualize=False)
-                        problemGMin = PositionSearchProblem(gameState, start=problem.getStartState(), goal=gMin,
-                                                            warn=False, visualize=False)
+                        problemRealG = PositionSearchProblem(gameState, start=initialState, goal=realG, warn=False,
+                                                             visualize=False)
+                        problemGMin = PositionSearchProblem(gameState, start=initialState, goal=gMin, warn=False,
+                                                            visualize=False)
                         if heuristic(succState, problemRealG) < heuristic(succState, problemGMin):
                             openList.push(newNode, newNode[2] + ALPHA * heuristic(succState, problem))
                         else:

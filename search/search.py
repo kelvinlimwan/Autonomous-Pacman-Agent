@@ -171,9 +171,11 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     #COMP90054 Task 1, Implement your A Star search algorithm here
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+
     openList = util.PriorityQueue() # priority is f = g + h
-    initialNode = (problem.getStartState(), "", 0, [])
-    openList.push(initialNode, initialNode[2] + heuristic(problem.getStartState(), problem))
+    initialState = problem.getStartState()
+    initialNode = (initialState, "", 0, [])
+    openList.push(initialNode, initialNode[2] + heuristic(initialState, problem))
     closedList = set()
     bestG = dict()  # maps each state to their corresponding best g
 
@@ -185,7 +187,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         if state not in bestG:
             bestG[state] = INFINITY
 
-        # for unvisited state or re-open if there is a better g for state
+        # when state is unvisited or re-open if there is a better g for state
         if state not in closedList or cost < bestG[state]:
             closedList.add(state)
             bestG[state] = cost # update state's best G
@@ -214,6 +216,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 def recursivebfs(problem, heuristic=nullHeuristic) :
     #COMP90054 Task 2, Implement your Recursive Best First Search algorithm here
     "*** YOUR CODE HERE ***"
+
     initialState = problem.getStartState()
     initialNode = [initialState, "", 0, [], heuristic(initialState, problem)]  # [state, action, g, path, f]
 
@@ -224,11 +227,11 @@ def recursivebfs(problem, heuristic=nullHeuristic) :
     return actions
 
 def rbfsExplore(problem, node, limit, heuristic):
+
     state = node[0]
     action = node[1]
     cost = node[2]
     path = node[3]
-    fValue = node[4]
 
     # when goal state is reached, return path
     if problem.isGoalState(state):
@@ -240,7 +243,7 @@ def rbfsExplore(problem, node, limit, heuristic):
     if not succNodes:
         return [], INFINITY
 
-    # create list corresponding nodes for state's children
+    # create list of corresponding nodes for state's children
     nodeList = []
     for succNode in succNodes:
         succState, succAction, succCost = succNode
@@ -249,21 +252,21 @@ def rbfsExplore(problem, node, limit, heuristic):
         nodeList.append(newNode)
 
     while True:
-        nodeList.sort(key=lambda x: x[4])   # sort in ascending order of f
+        nodeList.sort(key=lambda x: x[4])   # sort nodes in ascending order of f
         bestNode = nodeList[0]  # node with lowest f
 
         # when lowest f is  greater than the f limit, return an empty list as signal for failure
         if bestNode[4] > limit:
             return [], bestNode[4]
 
-        # second lowest f
+        # get second lowest f (if it exists)
         try:
             secondBestF = nodeList[1][4]
         except:
             secondBestF = INFINITY
 
         result = rbfsExplore(problem, bestNode, min(limit, secondBestF), heuristic)
-        bestNode[4] = result[1]
+        bestNode[4] = result[1] # set appropriate f for best node
 
         # if result is not an empty list (not a failure) return the path
         if result[0]:
