@@ -14,5 +14,4 @@ Follow the project link for detailed explanation of each file.
 `python pacman.py -l task3Search -p AStarFoodSearchAgent`
 
 -To visualise the Pacman agent following a Deceptive search strategy, run
-`python pacman.py --layout deceptiveMap --pacman DeceptiveSearchAgentpi2` and
-`python pacman.py --layout deceptiveMap --pacman DeceptiveSearchAgentpi3`
+`python pacman.py --layout deceptiveMap --pacman DeceptiveSearchAgentpi2` and `python pacman.py --layout deceptiveMap --pacman DeceptiveSearchAgentpi3`
